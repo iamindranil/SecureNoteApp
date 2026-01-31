@@ -14,6 +14,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Data
@@ -25,9 +26,9 @@ import java.time.LocalDateTime;
         })
 public class User{
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name="user_id")
-    private Long userId;
+    @GeneratedValue
+    @Column(name="user_id",updatable = false, nullable = false)
+    private UUID userId;
 
     @NotBlank
     @Size(max=20)
