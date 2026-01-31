@@ -20,14 +20,12 @@ public class NoteController {
     @PostMapping
     public Note createNote(@RequestBody String content, @AuthenticationPrincipal UserDetails userDetails){
         String username=userDetails.getUsername();
-        System.out.println("USER DETAILS: "+username);
         return noteService.createNoteForUser(username,content);
     }
 
     @GetMapping
     public List<Note> getUserNotes(@AuthenticationPrincipal UserDetails userDetails){
         String username=userDetails.getUsername();
-        System.out.println("USER DETAILS: "+username);
         return noteService.getNotesForUser(username);
     }
     @PutMapping("/{noteId}")

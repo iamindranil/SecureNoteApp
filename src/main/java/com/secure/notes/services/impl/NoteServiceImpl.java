@@ -24,18 +24,25 @@ public class NoteServiceImpl implements NoteService {
     @Override
     public Note updateNoteForUser(Long noteId, String content, String username){
         Note note=noteRepository.findById(noteId).orElseThrow(()->new RuntimeException("Note not found"));
+        if(!note.getOwnerUsername().equals(username)){
+            throw new RuntimeException("Access denied: You do not own this note");
+        }
         note.setContent(content);
         return noteRepository.save(note);
     }
 
     @Override
     public void deleteNoteForUser(Long noteId, String username){
+        Note note=noteRepository.findById(noteId).orElseThrow(()->new RuntimeException("Note not found"));
+        if(!note.getOwnerUsername().equals(username)){
+            throw new RuntimeException("Access denied: You do not own this note");
+        }
         noteRepository.deleteById(noteId);
     }
 
     @Override
     public List<Note> getNotesForUser(String username){
-        return noteRepository.findByownerUsername(username);
+        return noteRepository.findByOwnerUsername(username);
     }
 
 

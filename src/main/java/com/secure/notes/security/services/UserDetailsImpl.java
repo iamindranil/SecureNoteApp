@@ -3,6 +3,7 @@ package com.secure.notes.security.services;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.secure.notes.models.User;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
@@ -11,10 +12,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 
 @NoArgsConstructor
 @Data
+@EqualsAndHashCode(of = "id")
 public class UserDetailsImpl implements UserDetails {
     private static final long serialVersionUID=1L;
 
@@ -39,15 +40,19 @@ public class UserDetailsImpl implements UserDetails {
     }
 
     public static UserDetailsImpl build(User user){
-        GrantedAuthority authority=new SimpleGrantedAuthority(user.getRole().getRoleName().name());
-
+        List<GrantedAuthority> authorities;
+        if(user.getRole()!=null && user.getRole().getRoleName()!=null){
+            authorities=List.of(new SimpleGrantedAuthority(user.getRole().getRoleName().name()));
+        }else{
+            authorities=List.of();
+        }
         return new UserDetailsImpl(
                 user.getUserId(),
                 user.getUserName(),
                 user.getEmail(),
                 user.getPassword(),
                 user.isTwoFactorEnabled(),
-                List.of(authority)
+                authorities
         );
     }
 
@@ -87,11 +92,4 @@ public class UserDetailsImpl implements UserDetails {
         return true;
     }
 
-    @Override
-    public boolean equals(Object o){
-        if(this==o)return true;
-        if(o==null||this.getClass()!=o.getClass())return false;
-        UserDetailsImpl user=(UserDetailsImpl)o;
-        return Objects.equals(id,user.id);
-    }
 }

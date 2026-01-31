@@ -53,6 +53,7 @@ public class User{
     private LocalDate credentialsExpiryDate;
     private LocalDate accountExpiryDate;
 
+    @JsonIgnore
     private String twoFactorSecret;
     private boolean isTwoFactorEnabled=false;
     private String signUpMethod;
