@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
+
 
 @RestController
 @RequestMapping("/api/auth")
@@ -117,7 +117,7 @@ public class AuthController {
         }else{
             String roleStr=strRoles.iterator().next();
             if(roleStr.equalsIgnoreCase("admin")){
-                throw new RuntimeException("Admin registration is not allowed via public API.");
+                  return ResponseEntity.badRequest().body(new MessageResponse("Error: Admin registration is not allowed via public API"));
             }else{
                 role=roleRepository.findByRoleName(AppRole.ROLE_USER)
                         .orElseThrow(()->new RuntimeException("Error: Role is not found."));
