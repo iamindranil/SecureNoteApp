@@ -39,7 +39,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDTO getUserById(UUID id) {
-        User user=userRepository.findById(id).orElseThrow();
+        User user=userRepository.findById(id).orElseThrow(()->new RuntimeException("User not found"));
         return convertToDto(user);
     }
 
@@ -60,7 +60,6 @@ public class UserServiceImpl implements UserService {
                 user.isEnabled(),
                 user.getCredentialsExpiryDate(),
                 user.getAccountExpiryDate(),
-                user.getTwoFactorSecret(),
                 user.isTwoFactorEnabled(),
                 user.getSignUpMethod(),
                 user.getRole(),

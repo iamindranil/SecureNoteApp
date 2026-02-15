@@ -10,14 +10,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.security.Key;
 import java.util.Date;
 
-@Configuration
+@Component
 public class JwtUtils {
     private static final Logger logger= LoggerFactory.getLogger(JwtUtils.class);
 
@@ -25,7 +25,7 @@ public class JwtUtils {
     private String jwtSecret;
 
     @Value("${spring.app.jwtExpirationMs}")
-    private int jwtExpirationMs;
+    private long jwtExpirationMs;
 
     private Key Key(){
         return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
@@ -33,7 +33,7 @@ public class JwtUtils {
 
     public String getJwtFromHeader(HttpServletRequest request){
         String bearerToken=request.getHeader("Authorization");
-        logger.debug("Auth Header: {}",bearerToken);
+        logger.debug("Auth Header present: {}",bearerToken!=null);
         if(bearerToken!=null && bearerToken.startsWith("Bearer ")){
             return bearerToken.substring(7);
         }
@@ -59,7 +59,6 @@ public class JwtUtils {
 
     public boolean validateJwtToken(String authToken){
         try{
-            System.out.println("Validate");
             Jwts.parser().verifyWith((SecretKey)Key()).build().parseSignedClaims(authToken);
             return true;
         }catch(MalformedJwtException e){

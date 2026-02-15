@@ -69,7 +69,7 @@ public class AuthController {
             Map<String,Object> map=new HashMap<>();
             map.put("message","Bad credentials");
             map.put("status",false);
-            return new ResponseEntity<Object>(map, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(map, HttpStatus.UNAUTHORIZED);
         }
         //set authentication(marking user authenticated in spring security context)
         SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -116,9 +116,8 @@ public class AuthController {
                     .orElseThrow(()->new RuntimeException("Error: Role is not found."));
         }else{
             String roleStr=strRoles.iterator().next();
-            if(roleStr.equals("admin")){
-                role=roleRepository.findByRoleName(AppRole.ROLE_ADMIN)
-                        .orElseThrow(()->new RuntimeException("Error: Role is not found."));
+            if(roleStr.equalsIgnoreCase("admin")){
+                throw new RuntimeException("Admin registration is not allowed via public API.");
             }else{
                 role=roleRepository.findByRoleName(AppRole.ROLE_USER)
                         .orElseThrow(()->new RuntimeException("Error: Role is not found."));

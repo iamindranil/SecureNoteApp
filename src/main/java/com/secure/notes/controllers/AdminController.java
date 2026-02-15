@@ -2,6 +2,7 @@ package com.secure.notes.controllers;
 
 
 import com.secure.notes.dtos.UserDTO;
+import com.secure.notes.models.AppRole;
 import com.secure.notes.models.User;
 import com.secure.notes.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,12 @@ public class AdminController {
 
     @PutMapping("/update-role")
     public ResponseEntity<String> updateUserRole(@RequestParam UUID userId, @RequestParam String roleName){
+        //invalid roleName check
+        try{
+            AppRole.valueOf(roleName);
+        }catch(IllegalArgumentException e){
+            return ResponseEntity.badRequest().body("Invalid Role Name: "+roleName);
+        }
         userService.updateUserRole(userId,roleName);
         return ResponseEntity.ok("User role has been updated");
     }
