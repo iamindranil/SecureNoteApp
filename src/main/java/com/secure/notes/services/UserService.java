@@ -9,7 +9,7 @@ import java.util.UUID;
 public interface UserService {
     void updateUserRole(UUID userId, String roleName);
 
-    List<User> getAllUsers();
+    List<UserDTO> getAllUsers();
 
     UserDTO getUserById(UUID id);
 

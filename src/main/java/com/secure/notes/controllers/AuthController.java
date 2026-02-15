@@ -15,6 +15,7 @@ import com.secure.notes.security.response.UserInfoResponse;
 import com.secure.notes.services.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -135,7 +136,13 @@ public class AuthController {
         user.setSignUpMethod("email");
         user.setRole(role);
 
-        userRepository.save(user);
+        try{
+            userRepository.save(user);
+        }catch(DataIntegrityViolationException e){
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new MessageResponse("Error: Username or Email already exists!"));
+        }
+
 
         return ResponseEntity.ok(new MessageResponse("User Registered Successfully!"));
     }
