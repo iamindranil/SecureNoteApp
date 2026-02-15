@@ -9,6 +9,7 @@ import com.secure.notes.repositories.UserRepository;
 import com.secure.notes.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,10 +24,16 @@ public class UserServiceImpl implements UserService {
     @Autowired
     RoleRepository roleRepository;
 
+    @Transactional
     @Override
     public void updateUserRole(UUID userId, String roleName) {
         User user=userRepository.findById(userId).orElseThrow(()->new RuntimeException("User not found"));
-        AppRole appRole=AppRole.valueOf(roleName);
+        AppRole appRole;
+        try{
+            appRole=AppRole.valueOf(roleName);
+        }catch(IllegalArgumentException e){
+            throw new RuntimeException("Invalid role: "+roleName);
+        }
         Role role=roleRepository.findByRoleName(appRole).orElseThrow(()->new RuntimeException("Role not found"));
         user.setRole(role);
         userRepository.save(user);
