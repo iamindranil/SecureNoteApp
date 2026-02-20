@@ -18,6 +18,7 @@ public class AuditLog {
     private String action;
     private String username;
     private Long noteId;
-    private String noteContent;
+    @jakarta.persistence.Column(columnDefinition = "TEXT")
+    private String noteContent;//With no @Column annotation, Hibernate maps String to VARCHAR(255) by default on MySQL
     private LocalDateTime timeStamp;
 }

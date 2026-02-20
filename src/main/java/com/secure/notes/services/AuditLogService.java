@@ -2,6 +2,8 @@ package com.secure.notes.services;
 
 import com.secure.notes.models.AuditLog;
 import com.secure.notes.models.Note;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -12,7 +14,7 @@ public interface AuditLogService {
 
     void logNoteDeletion(String username, Long noteId);
 
-    List<AuditLog> getAllAuditLogs();
+    Page<AuditLog> getAllAuditLogs(Pageable pageable);
 
     List<AuditLog> getAuditLogsForNoteId(Long id);
 }

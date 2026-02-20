@@ -5,8 +5,11 @@ import com.secure.notes.models.Note;
 import com.secure.notes.repositories.AuditLogRepository;
 import com.secure.notes.services.AuditLogService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -23,7 +26,7 @@ public class AuditLogServiceImpl implements AuditLogService {
         log.setUsername(username);
         log.setNoteId(note.getId());
         log.setNoteContent(note.getContent());
-        log.setTimeStamp(LocalDateTime.now());
+        log.setTimeStamp(LocalDateTime.from(Instant.now()));
         auditLogRepository.save(log);
     }
     @Override
@@ -33,7 +36,7 @@ public class AuditLogServiceImpl implements AuditLogService {
         log.setUsername(username);
         log.setNoteId(note.getId());
         log.setNoteContent(note.getContent());
-        log.setTimeStamp(LocalDateTime.now());
+        log.setTimeStamp(LocalDateTime.from(Instant.now()));
         auditLogRepository.save(log);
     }
     @Override
@@ -42,13 +45,13 @@ public class AuditLogServiceImpl implements AuditLogService {
         log.setAction("DELETED");
         log.setUsername(username);
         log.setNoteId(noteId);
-        log.setTimeStamp(LocalDateTime.now());
+        log.setTimeStamp(LocalDateTime.from(Instant.now()));
         auditLogRepository.save(log);
     }
 
     @Override
-    public List<AuditLog> getAllAuditLogs() {
-        return auditLogRepository.findAll();
+    public Page<AuditLog> getAllAuditLogs(Pageable pageable) {
+        return auditLogRepository.findAll(pageable);
     }
 
     @Override

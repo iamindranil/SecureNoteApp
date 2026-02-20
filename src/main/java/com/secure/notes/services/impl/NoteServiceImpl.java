@@ -6,6 +6,7 @@ import com.secure.notes.services.AuditLogService;
 import com.secure.notes.services.NoteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,6 +20,7 @@ public class NoteServiceImpl implements NoteService {
     @Autowired
     private AuditLogService auditLogService;
 
+    @Transactional
     @Override
     public Note createNoteForUser(String username, String content){
         Note note=new Note();
@@ -28,6 +30,8 @@ public class NoteServiceImpl implements NoteService {
         auditLogService.logNoteCreation(username,note);
         return savedNote;
     }
+
+    @Transactional
     @Override
     public Note updateNoteForUser(Long noteId, String content, String username){
         Note note=noteRepository.findById(noteId).orElseThrow(()->new RuntimeException("Note not found"));
@@ -40,6 +44,7 @@ public class NoteServiceImpl implements NoteService {
         return savedNote;
     }
 
+    @Transactional
     @Override
     public void deleteNoteForUser(Long noteId, String username){
         Note note=noteRepository.findById(noteId).orElseThrow(()->new RuntimeException("Note not found"));
