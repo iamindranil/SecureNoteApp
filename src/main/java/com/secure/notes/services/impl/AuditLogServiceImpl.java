@@ -26,7 +26,7 @@ public class AuditLogServiceImpl implements AuditLogService {
         log.setUsername(username);
         log.setNoteId(note.getId());
         log.setNoteContent(note.getContent());
-        log.setTimeStamp(LocalDateTime.from(Instant.now()));
+        log.setTimeStamp(LocalDateTime.now());
         auditLogRepository.save(log);
     }
     @Override
@@ -36,7 +36,7 @@ public class AuditLogServiceImpl implements AuditLogService {
         log.setUsername(username);
         log.setNoteId(note.getId());
         log.setNoteContent(note.getContent());
-        log.setTimeStamp(LocalDateTime.from(Instant.now()));
+        log.setTimeStamp(LocalDateTime.now());
         auditLogRepository.save(log);
     }
     @Override
@@ -45,7 +45,7 @@ public class AuditLogServiceImpl implements AuditLogService {
         log.setAction("DELETED");
         log.setUsername(username);
         log.setNoteId(noteId);
-        log.setTimeStamp(LocalDateTime.from(Instant.now()));
+        log.setTimeStamp(LocalDateTime.now());
         auditLogRepository.save(log);
     }
 

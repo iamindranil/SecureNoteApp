@@ -27,7 +27,7 @@ public class NoteServiceImpl implements NoteService {
         note.setContent(content);
         note.setOwnerUsername(username);
         Note savedNote=noteRepository.save(note);
-        auditLogService.logNoteCreation(username,note);
+        auditLogService.logNoteCreation(username,savedNote);
         return savedNote;
     }
 
@@ -40,7 +40,7 @@ public class NoteServiceImpl implements NoteService {
         }
         note.setContent(content);
         Note savedNote=noteRepository.save(note);
-        auditLogService.logNoteUpdate(username,note);
+        auditLogService.logNoteUpdate(username,savedNote);
         return savedNote;
     }
 
