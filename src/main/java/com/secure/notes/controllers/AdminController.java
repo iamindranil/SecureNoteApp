@@ -1,9 +1,10 @@
 package com.secure.notes.controllers;
 
 
+import com.secure.notes.dtos.UpdatePasswordDTO;
 import com.secure.notes.dtos.UserDTO;
 import com.secure.notes.models.AppRole;
-import com.secure.notes.models.User;
+import com.secure.notes.models.Role;
 import com.secure.notes.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -42,6 +43,67 @@ public class AdminController {
     @GetMapping("/user/{id}")
     public ResponseEntity<UserDTO> getUser(@PathVariable UUID id){
         return new ResponseEntity<>(userService.getUserById(id),HttpStatus.OK);
+    }
+
+    @PutMapping("/update-lock-status")
+    public ResponseEntity<String> updateAccountLockStatus(@RequestParam UUID userId,
+                                                          @RequestParam boolean lock) {
+        try{
+            userService.updateAccountLockStatus(userId,lock);
+            return ResponseEntity.ok("Account lock status updated");
+        }catch(RuntimeException e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+
+    }
+
+    @GetMapping("/roles")
+    public List<Role> getAllRoles() {
+        return userService.getAllRoles();
+    }
+
+    @PutMapping("/update-expiry-status")
+    public ResponseEntity<String> updateAccountExpiryStatus(@RequestParam UUID userId,
+                                                            @RequestParam boolean expire) {
+        try {
+            userService.updateAccountExpiryStatus(userId, expire);
+            return ResponseEntity.ok("Account expiry status updated");
+        }catch(RuntimeException e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/update-enabled-status")
+    public ResponseEntity<String> updateAccountEnabledStatus(@RequestParam UUID userId,
+                                                             @RequestParam boolean enabled) {
+        try {
+            userService.updateAccountEnabledStatus(userId, enabled);
+            return ResponseEntity.ok("Account enabled status updated");
+        }catch(RuntimeException e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/update-credentials-expiry-status")
+    public ResponseEntity<String> updateCredentialsExpiryStatus(@RequestParam UUID userId,
+                                                                @RequestParam boolean expire) {
+        try {
+            userService.updateCredentialsExpiryStatus(userId, expire);
+            return ResponseEntity.ok("Credentials expiry status updated");
+        }catch (RuntimeException e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/update-password")
+    public ResponseEntity<String> updatePassword(@RequestParam UUID userId,
+                                                 @RequestBody UpdatePasswordDTO request) {
+        try {
+            userService.updatePassword(userId,request.getPassword());
+            return ResponseEntity.ok("Password updated");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
     }
 
 
