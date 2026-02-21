@@ -8,6 +8,7 @@ import com.secure.notes.repositories.RoleRepository;
 import com.secure.notes.repositories.UserRepository;
 import com.secure.notes.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     RoleRepository roleRepository;
+
+    @Autowired
+    PasswordEncoder passwordEncoder;
 
     @Transactional
     @Override
@@ -76,6 +80,55 @@ public class UserServiceImpl implements UserService {
                 user.getCreatedDate(),
                 user.getUpdatedDate()
         );
+    }
+
+    @Override
+    public void updateAccountLockStatus(UUID userId, boolean lock){
+        User user=userRepository.findById(userId)
+                .orElseThrow(()->new RuntimeException("User not found"));
+        user.setAccountNonLocked(!lock);
+        userRepository.save(user);
+    }
+
+    @Override
+    public List<Role> getAllRoles(){
+        return roleRepository.findAll();
+    }
+
+    @Override
+    public void updateAccountExpiryStatus(UUID userId, boolean expire){
+        User user=userRepository.findById(userId)
+                .orElseThrow(()->new RuntimeException("User not found"));
+        user.setAccountNonExpired(!expire);
+        userRepository.save(user);
+    }
+
+    @Override
+    public void updateAccountEnabledStatus(UUID userId, boolean enabled) {
+        User user=userRepository.findById(userId)
+                .orElseThrow(()->new RuntimeException("User not found"));
+        user.setEnabled(enabled);
+        userRepository.save(user);
+    }
+
+    @Override
+    public void updateCredentialsExpiryStatus(UUID userId, boolean expire) {
+        User user=userRepository.findById(userId)
+                .orElseThrow(()->new RuntimeException("User not found"));
+        user.setCredentialsNonExpired(!expire);
+        userRepository.save(user);
+    }
+
+    @Override
+    public void updatePassword(UUID userId, String password) {
+        try{
+            User user=userRepository.findById(userId)
+                    .orElseThrow(()->new RuntimeException("User not found"));
+            user.setPassword(passwordEncoder.encode(password));
+            userRepository.save(user);
+        }catch(Exception e){
+            throw new RuntimeException("Failed to update password");
+        }
     }
 
 
