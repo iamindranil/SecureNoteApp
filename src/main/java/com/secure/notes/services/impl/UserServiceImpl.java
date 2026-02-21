@@ -121,9 +121,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void updatePassword(UUID userId, String password) {
+        User user=userRepository.findById(userId)
+                .orElseThrow(()->new RuntimeException("User not found"));
         try{
-            User user=userRepository.findById(userId)
-                    .orElseThrow(()->new RuntimeException("User not found"));
             user.setPassword(passwordEncoder.encode(password));
             userRepository.save(user);
         }catch(Exception e){
