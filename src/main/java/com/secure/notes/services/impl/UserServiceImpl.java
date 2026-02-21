@@ -82,6 +82,7 @@ public class UserServiceImpl implements UserService {
         );
     }
 
+    @Transactional
     @Override
     public void updateAccountLockStatus(UUID userId, boolean lock){
         User user=userRepository.findById(userId)
@@ -95,6 +96,7 @@ public class UserServiceImpl implements UserService {
         return roleRepository.findAll();
     }
 
+    @Transactional
     @Override
     public void updateAccountExpiryStatus(UUID userId, boolean expire){
         User user=userRepository.findById(userId)
@@ -103,6 +105,7 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
+    @Transactional
     @Override
     public void updateAccountEnabledStatus(UUID userId, boolean enabled) {
         User user=userRepository.findById(userId)
@@ -111,6 +114,7 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
+    @Transactional
     @Override
     public void updateCredentialsExpiryStatus(UUID userId, boolean expire) {
         User user=userRepository.findById(userId)
@@ -119,6 +123,7 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
+    @Transactional
     @Override
     public void updatePassword(UUID userId, String password) {
         User user=userRepository.findById(userId)

@@ -1,6 +1,7 @@
 package com.secure.notes.controllers;
 
 
+import com.secure.notes.dtos.UpdatePasswordDTO;
 import com.secure.notes.dtos.UserDTO;
 import com.secure.notes.models.AppRole;
 import com.secure.notes.models.Role;
@@ -96,9 +97,9 @@ public class AdminController {
 
     @PutMapping("/update-password")
     public ResponseEntity<String> updatePassword(@RequestParam UUID userId,
-                                                 @RequestBody String password) {
+                                                 @RequestBody UpdatePasswordDTO request) {
         try {
-            userService.updatePassword(userId, password);
+            userService.updatePassword(userId,request.getPassword());
             return ResponseEntity.ok("Password updated");
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
