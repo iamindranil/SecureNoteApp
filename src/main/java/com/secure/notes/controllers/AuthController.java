@@ -1,6 +1,7 @@
 package com.secure.notes.controllers;
 
 
+import com.secure.notes.dtos.UpdatePasswordDTO;
 import com.secure.notes.models.AppRole;
 import com.secure.notes.models.Role;
 import com.secure.notes.models.User;
@@ -39,7 +40,6 @@ public class AuthController {
 
     @Autowired
     JwtUtils jwtUtils;
-
 
     @Autowired
     AuthenticationManager authenticationManager;
@@ -174,6 +174,29 @@ public class AuthController {
     @GetMapping("/username")
     public String currentUserName(@AuthenticationPrincipal UserDetails userDetails) {
         return userDetails!=null?userDetails.getUsername():"";
+    }
+
+    @PostMapping("/public/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestParam String email){
+        try {
+            userService.generatePasswordResetToken(email);
+            return ResponseEntity.ok(new MessageResponse("Password reset email sent!"));
+        }catch(Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new MessageResponse("Error sending password reset email"));
+        }
+
+    }
+
+    @PostMapping("/public/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestParam String token,@RequestBody UpdatePasswordDTO newPassword){
+        try{
+            userService.resetPassword(token,newPassword.getPassword());
+            return ResponseEntity.ok(new MessageResponse("Password reset successful!"));
+        }catch(RuntimeException e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new MessageResponse(e.getMessage()));
+        }
     }
 
 
