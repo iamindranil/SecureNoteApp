@@ -180,22 +180,20 @@ public class AuthController {
     public ResponseEntity<?> forgotPassword(@RequestParam String email){
         try {
             userService.generatePasswordResetToken(email);
-            return ResponseEntity.ok(new MessageResponse("Password reset email sent!"));
-        }catch(Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new MessageResponse("Error sending password reset email"));
+        }catch(Exception ignored){
+            // Intentionally swallowed — do not reveal whether the email exists
         }
-
+        return ResponseEntity.ok(new MessageResponse("If this email is registered, a password reset link has been sent."));
     }
 
     @PostMapping("/public/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestParam String token,@RequestBody UpdatePasswordDTO newPassword){
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody UpdatePasswordDTO newPassword){
         try{
-            userService.resetPassword(token,newPassword.getPassword());
+            userService.resetPassword(newPassword.getToken(),newPassword.getPassword());
             return ResponseEntity.ok(new MessageResponse("Password reset successful!"));
         }catch(RuntimeException e){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new MessageResponse(e.getMessage()));
+                    .body(new MessageResponse("Invalid or expired password reset token"));
         }
     }
 

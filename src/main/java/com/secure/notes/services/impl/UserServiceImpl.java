@@ -1,7 +1,8 @@
 package com.secure.notes.services.impl;
 
-import com.secure.notes.dtos.UpdatePasswordDTO;
+
 import com.secure.notes.dtos.UserDTO;
+import com.secure.notes.event.PasswordResetEvent;
 import com.secure.notes.models.AppRole;
 import com.secure.notes.models.PasswordResetToken;
 import com.secure.notes.models.Role;
@@ -12,7 +13,7 @@ import com.secure.notes.repositories.UserRepository;
 import com.secure.notes.services.UserService;
 import com.secure.notes.util.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,9 +26,6 @@ import java.util.UUID;
 
 @Service
 public class UserServiceImpl implements UserService {
-    @Value("${frontend.url}")
-    String frontendUrl;
-
     @Autowired
     UserRepository userRepository;
 
@@ -41,7 +39,7 @@ public class UserServiceImpl implements UserService {
     PasswordResetTokenRepository passwordResetTokenRepository;
 
     @Autowired
-    EmailService emailService;
+    ApplicationEventPublisher eventPublisher;
 
     @Transactional
     @Override
@@ -154,16 +152,16 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public void generatePasswordResetToken(String email){
-        User user=userRepository.findByEmail(email)
-                .orElseThrow(()->new RuntimeException("User not found"));
+        Optional<User> userOpt=userRepository.findByEmail(email);
+        if(userOpt.isEmpty())return;
+        User user=userOpt.get();
         String token=UUID.randomUUID().toString();
-        Instant expiryDate=Instant.now().plus(24, ChronoUnit.HOURS);
+        Instant expiryDate=Instant.now().plus(30, ChronoUnit.MINUTES);
         PasswordResetToken resetToken=new PasswordResetToken(token,expiryDate,user);
+        passwordResetTokenRepository.deleteByUser(user);//delete old token
         passwordResetTokenRepository.save(resetToken);
-        String resetUrl=frontendUrl+"/reset-password?token="+token;
-        //send email to user
-        emailService.sendPasswordResetEmail(user.getEmail(), resetUrl);
-
+        //Publish event for email sending
+        eventPublisher.publishEvent(new PasswordResetEvent(user.getEmail(),token));
     }
 
     @Transactional
