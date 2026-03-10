@@ -227,6 +227,7 @@ public class UserServiceImpl implements UserService {
         User user=userRepository.findById(userId)
                 .orElseThrow(()-> new RuntimeException("user not found"));
         user.setTwoFactorEnabled(false);
+        user.setTwoFactorSecret(null);
         userRepository.save(user);
     }
 

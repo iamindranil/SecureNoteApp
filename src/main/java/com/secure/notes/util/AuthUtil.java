@@ -6,6 +6,7 @@ import com.secure.notes.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
@@ -17,9 +18,11 @@ public class AuthUtil {
 
     public UUID loggedInUserId(){
         Authentication authentication= SecurityContextHolder.getContext().getAuthentication();
-        assert authentication!=null;
+        if (authentication==null||!authentication.isAuthenticated()) {
+            throw new IllegalStateException("No authenticated user found");
+        }
         User user=userRepository.findByUserName(authentication.getName())
-                .orElseThrow(()-> new RuntimeException("user not found"));
+                .orElseThrow(()-> new UsernameNotFoundException("User not found: " + authentication.getName()));
         return user.getUserId();
     }
 
