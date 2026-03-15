@@ -1,6 +1,7 @@
 package com.secure.notes.security.jwt;
 
 import com.secure.notes.security.services.UserDetailsServiceImpl;
+import com.secure.notes.services.JwtBlacklistService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,6 +26,9 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     @Autowired
     private UserDetailsServiceImpl userDetailsService;
 
+    @Autowired
+    private JwtBlacklistService jwtBlacklistService;
+
     private static final Logger logger= LoggerFactory.getLogger(AuthTokenFilter.class);
 
     private String parseJwt(HttpServletRequest request) {
@@ -40,6 +44,12 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         logger.debug("AuthTokenFilter called for URI: {}",request.getRequestURI());
         try{
             String jwt=parseJwt(request);
+            if(jwt!=null && jwtBlacklistService.isTokenBlacklisted(jwt)){
+                logger.error("Rejected request: JWT token is blacklisted (User logged out)");
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().write("Token is no longer valid. Please log in again.");
+                return;
+            }
             if(jwt!=null && jwtUtils.validateJwtToken(jwt)){
                 String username=jwtUtils.getUserNameFromJwtToken(jwt);
                 UserDetails userDetails=userDetailsService.loadUserByUsername(username);
