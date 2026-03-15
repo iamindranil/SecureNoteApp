@@ -2,6 +2,7 @@ package com.secure.notes.controllers;
 
 
 import com.secure.notes.dtos.UpdatePasswordDTO;
+import com.secure.notes.dtos.UserDTO;
 import com.secure.notes.models.AppRole;
 import com.secure.notes.models.Role;
 import com.secure.notes.models.User;
@@ -14,10 +15,13 @@ import com.secure.notes.security.response.LoginResponse;
 import com.secure.notes.security.response.MessageResponse;
 import com.secure.notes.security.response.UserInfoResponse;
 import com.secure.notes.security.services.UserDetailsImpl;
+import com.secure.notes.services.JwtBlacklistService;
+import com.secure.notes.services.RateLimitingService;
 import com.secure.notes.services.TotpService;
 import com.secure.notes.services.UserService;
 import com.secure.notes.util.AuthUtil;
 import com.warrenstrange.googleauth.GoogleAuthenticatorKey;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -65,6 +69,12 @@ public class AuthController {
 
     @Autowired
     TotpService totpService;
+
+    @Autowired
+    RateLimitingService rateLimitingService;
+
+    @Autowired
+    JwtBlacklistService jwtBlacklistService;
 
     @PostMapping("/public/signin")
     public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest){
@@ -227,9 +237,17 @@ public class AuthController {
     @PostMapping("/verify-2fa")
     public ResponseEntity<String> verify2FA(@RequestParam int code){
         UUID userId=authUtil.loggedInUserId();
+        String userName=authUtil.loggedInUser().getUserName();
+        //check rate limit
+        if(rateLimitingService.isRateLimited(userName)){
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body("Too many failed attempts! Please try again later");
+        }
         boolean isValid=userService.validate2FACode(userId,code);
         if(isValid){
             userService.enable2FA(userId);
+            //clear rate limit on success
+            rateLimitingService.clearRateLimit(userName);
             return ResponseEntity.ok("2FA verified");
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -238,7 +256,7 @@ public class AuthController {
 
     @GetMapping("/user/2fa-status")
     public ResponseEntity<?> get2FAStatus(){
-        User user=authUtil.loggedInUser();
+        UserDTO user=authUtil.loggedInUser();
         if(user!=null){
             return ResponseEntity.ok().body(Map.of("is2faEnabled",user.isTwoFactorEnabled()));
         }
@@ -250,13 +268,32 @@ public class AuthController {
     public ResponseEntity<String>verify2FALogin(@RequestParam int code,@RequestParam String jwtToken){
 
         String username=jwtUtils.getUserNameFromJwtToken(jwtToken);
+        //check rate limit first
+        if(rateLimitingService.isRateLimited(username)){
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body("Too many failed attempts. Please try again later.");
+        }
         User user=userService.findByUsername(username);
         boolean isValid=userService.validate2FACode(user.getUserId(),code);
         if(isValid){
+            //Clear rate limit on success
+            rateLimitingService.clearRateLimit(username);
             return ResponseEntity.ok("2FA verified");
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body("Invalid 2FA code");
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String>logout(HttpServletRequest request){
+        String authHeader=request.getHeader("Authorization");
+        if(authHeader!=null && authHeader.startsWith("Bearer ")){
+            String jwt=authHeader.substring(7);
+            //Toss it into redis blacklist
+            jwtBlacklistService.blacklistToken(jwt);
+            return ResponseEntity.ok("Successfully logged out.Token invalidated");
+        }
+        return ResponseEntity.badRequest().body("No JWT token found in request header");
     }
 }
 

@@ -66,6 +66,13 @@ public class JwtUtils {
                 .getPayload().getSubject();
     }
 
+    public Date getExpirationDateFromJwtToken(String token){
+        return Jwts.parser()
+                .verifyWith((SecretKey) Key())
+                .build().parseSignedClaims(token)
+                .getPayload().getExpiration();
+    }
+
     public boolean validateJwtToken(String authToken){
         try{
             Jwts.parser().verifyWith((SecretKey)Key()).build().parseSignedClaims(authToken);
