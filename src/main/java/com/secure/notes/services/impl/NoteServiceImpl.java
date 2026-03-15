@@ -1,5 +1,6 @@
 package com.secure.notes.services.impl;
 
+import com.secure.notes.exceptions.ResourceNotFoundException;
 import com.secure.notes.models.Note;
 import com.secure.notes.repositories.NoteRepository;
 import com.secure.notes.services.AuditLogService;
@@ -7,9 +8,9 @@ import com.secure.notes.services.NoteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.util.List;
-import java.util.UUID;
 
 @Service
 public class NoteServiceImpl implements NoteService {
@@ -34,9 +35,9 @@ public class NoteServiceImpl implements NoteService {
     @Transactional
     @Override
     public Note updateNoteForUser(Long noteId, String content, String username){
-        Note note=noteRepository.findById(noteId).orElseThrow(()->new RuntimeException("Note not found"));
+        Note note=noteRepository.findById(noteId).orElseThrow(()->new ResourceNotFoundException("Note not found"));
         if(!note.getOwnerUsername().equals(username)){
-            throw new RuntimeException("Access denied: You do not own this note");
+            throw new AccessDeniedException("Access denied: You do not own this note");
         }
         note.setContent(content);
         Note savedNote=noteRepository.save(note);
@@ -47,9 +48,9 @@ public class NoteServiceImpl implements NoteService {
     @Transactional
     @Override
     public void deleteNoteForUser(Long noteId, String username){
-        Note note=noteRepository.findById(noteId).orElseThrow(()->new RuntimeException("Note not found"));
+        Note note=noteRepository.findById(noteId).orElseThrow(()->new ResourceNotFoundException("Note not found"));
         if(!note.getOwnerUsername().equals(username)){
-            throw new RuntimeException("Access denied: You do not own this note");
+            throw new AccessDeniedException("Access denied: You do not own this note");
         }
         auditLogService.logNoteDeletion(username,noteId);
         noteRepository.deleteById(noteId);

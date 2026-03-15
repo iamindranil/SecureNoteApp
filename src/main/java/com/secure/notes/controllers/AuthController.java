@@ -3,6 +3,7 @@ package com.secure.notes.controllers;
 
 import com.secure.notes.dtos.UpdatePasswordDTO;
 import com.secure.notes.dtos.UserDTO;
+import com.secure.notes.exceptions.ResourceNotFoundException;
 import com.secure.notes.models.AppRole;
 import com.secure.notes.models.Role;
 import com.secure.notes.models.User;
@@ -78,49 +79,37 @@ public class AuthController {
 
     @PostMapping("/public/signin")
     public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest){
-        Authentication authentication;
-        try{
-            authentication=authenticationManager
-            .authenticate(
-                    (new UsernamePasswordAuthenticationToken(loginRequest.getUsername(),
-                            loginRequest.getPassword())
-                    )
-            );
-        }catch(AuthenticationException e){
-            Map<String,Object> map=new HashMap<>();
-            map.put("message","Bad credentials");
-            map.put("status",false);
-            return new ResponseEntity<>(map, HttpStatus.UNAUTHORIZED);
-        }
+        Authentication authentication=authenticationManager
+                .authenticate(
+                        (new UsernamePasswordAuthenticationToken(
+                                loginRequest.getUsername(),
+                                loginRequest.getPassword())
+                        )
+                );
         //set authentication(marking user authenticated in spring security context)
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         UserDetailsImpl userDetails=(UserDetailsImpl) authentication.getPrincipal();
-        String jwtToken=null;
-        if(userDetails!=null) {
-            jwtToken=jwtUtils.generateTokenFromUsername(userDetails);
-        }
+        Objects.requireNonNull(userDetails, "User details cannot be null after successful authentication");
+
+        String jwtToken=jwtUtils.generateTokenFromUsername(userDetails);
         //collect roles from userDetails
-        List<String>roles=null;
-        if(userDetails!=null) {
-            roles=userDetails.getAuthorities().stream()
-                    .map(GrantedAuthority::getAuthority)
-                    .toList();
-        }
+        List<String>roles=userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList();
         //prep the response body
-        LoginResponse response=null;
-        if(userDetails!=null) response=new LoginResponse(userDetails.getUsername(),roles,jwtToken);
+        LoginResponse response=new LoginResponse(userDetails.getUsername(),roles,jwtToken);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/public/signup")
     public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signupRequest){
         if(userRepository.existsByUserName(signupRequest.getUsername())){
-            return ResponseEntity.badRequest().body(new MessageResponse("Error: User Already Exists!"));
+            throw new IllegalArgumentException("Error: Username is already taken!");
         }
 
         if(userRepository.existsByEmail(signupRequest.getEmail())){
-            return ResponseEntity.badRequest().body(new MessageResponse("Error: Email Is Already In Use!"));
+            throw new IllegalArgumentException("Error: Email is already in use!");
         }
 
         //create user new account
@@ -134,14 +123,14 @@ public class AuthController {
 
         if(strRoles==null || strRoles.isEmpty()){
             role=roleRepository.findByRoleName(AppRole.ROLE_USER)
-                    .orElseThrow(()->new RuntimeException("Error: Role is not found."));
+                    .orElseThrow(()->new ResourceNotFoundException("Error: Role is not found."));
         }else{
             String roleStr=strRoles.iterator().next();
             if(roleStr.equalsIgnoreCase("admin")){
-                  return ResponseEntity.badRequest().body(new MessageResponse("Error: Admin registration is not allowed via public API"));
+                throw new IllegalArgumentException("Error: Admin registration is not allowed via public API");
             }else{
                 role=roleRepository.findByRoleName(AppRole.ROLE_USER)
-                        .orElseThrow(()->new RuntimeException("Error: Role is not found."));
+                        .orElseThrow(()->new ResourceNotFoundException("Error: Role is not found."));
             }
 
         }
@@ -156,14 +145,9 @@ public class AuthController {
         user.setSignUpMethod("email");
         user.setRole(role);
 
-        try{
-            userRepository.save(user);
-        }catch(DataIntegrityViolationException e){
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(new MessageResponse("Error: Username or Email already exists!"));
-        }
-
-
+        userRepository.save(user);
+        //if two person want to register using same email at exact same millisecond...then DataIntegrityViolationException
+        //occurs and after global exception refactor it has been handled.
         return ResponseEntity.ok(new MessageResponse("User Registered Successfully!"));
     }
 
@@ -198,23 +182,14 @@ public class AuthController {
 
     @PostMapping("/public/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestParam String email){
-        try {
-            userService.generatePasswordResetToken(email);
-        }catch(Exception ignored){
-            // Intentionally swallowed — do not reveal whether the email exists
-        }
+        userService.generatePasswordResetToken(email);
         return ResponseEntity.ok(new MessageResponse("If this email is registered, a password reset link has been sent."));
     }
 
     @PostMapping("/public/reset-password")
     public ResponseEntity<?> resetPassword(@Valid @RequestBody UpdatePasswordDTO newPassword){
-        try{
-            userService.resetPassword(newPassword.getToken(),newPassword.getPassword());
-            return ResponseEntity.ok(new MessageResponse("Password reset successful!"));
-        }catch(RuntimeException e){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new MessageResponse("Invalid or expired password reset token"));
-        }
+        userService.resetPassword(newPassword.getToken(),newPassword.getPassword());
+        return ResponseEntity.ok(new MessageResponse("Password reset successful!"));
     }
 
     //2FA Authentication

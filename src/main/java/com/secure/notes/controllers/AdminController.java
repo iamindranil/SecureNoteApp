@@ -3,7 +3,6 @@ package com.secure.notes.controllers;
 
 import com.secure.notes.dtos.UpdatePasswordDTO;
 import com.secure.notes.dtos.UserDTO;
-import com.secure.notes.models.AppRole;
 import com.secure.notes.models.Role;
 import com.secure.notes.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,12 +28,6 @@ public class AdminController {
 
     @PutMapping("/update-role")
     public ResponseEntity<String> updateUserRole(@RequestParam UUID userId, @RequestParam String roleName){
-        //invalid roleName check
-        try{
-            AppRole.valueOf(roleName);
-        }catch(IllegalArgumentException e){
-            return ResponseEntity.badRequest().body("Invalid Role Name: "+roleName);
-        }
         userService.updateUserRole(userId,roleName);
         return ResponseEntity.ok("User role has been updated");
     }
@@ -48,13 +41,8 @@ public class AdminController {
     @PutMapping("/update-lock-status")
     public ResponseEntity<String> updateAccountLockStatus(@RequestParam UUID userId,
                                                           @RequestParam boolean lock) {
-        try{
-            userService.updateAccountLockStatus(userId,lock);
-            return ResponseEntity.ok("Account lock status updated");
-        }catch(RuntimeException e){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
-
+        userService.updateAccountLockStatus(userId,lock);
+        return ResponseEntity.ok("Account lock status updated");
     }
 
     @GetMapping("/roles")
@@ -65,48 +53,29 @@ public class AdminController {
     @PutMapping("/update-expiry-status")
     public ResponseEntity<String> updateAccountExpiryStatus(@RequestParam UUID userId,
                                                             @RequestParam boolean expire) {
-        try {
-            userService.updateAccountExpiryStatus(userId, expire);
-            return ResponseEntity.ok("Account expiry status updated");
-        }catch(RuntimeException e){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+        userService.updateAccountExpiryStatus(userId, expire);
+        return ResponseEntity.ok("Account expiry status updated");
     }
 
     @PutMapping("/update-enabled-status")
     public ResponseEntity<String> updateAccountEnabledStatus(@RequestParam UUID userId,
                                                              @RequestParam boolean enabled) {
-        try {
-            userService.updateAccountEnabledStatus(userId, enabled);
-            return ResponseEntity.ok("Account enabled status updated");
-        }catch(RuntimeException e){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+        userService.updateAccountEnabledStatus(userId, enabled);
+        return ResponseEntity.ok("Account enabled status updated");
     }
 
     @PutMapping("/update-credentials-expiry-status")
     public ResponseEntity<String> updateCredentialsExpiryStatus(@RequestParam UUID userId,
                                                                 @RequestParam boolean expire) {
-        try {
-            userService.updateCredentialsExpiryStatus(userId, expire);
-            return ResponseEntity.ok("Credentials expiry status updated");
-        }catch (RuntimeException e){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+        userService.updateCredentialsExpiryStatus(userId, expire);
+        return ResponseEntity.ok("Credentials expiry status updated");
     }
 
     @PutMapping("/update-password")
     public ResponseEntity<String> updatePassword(@RequestParam UUID userId,
                                                  @RequestBody UpdatePasswordDTO request) {
-        try {
-            userService.updatePassword(userId,request.getPassword());
-            return ResponseEntity.ok("Password updated");
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+        userService.updatePassword(userId,request.getPassword());
+        return ResponseEntity.ok("Password updated");
     }
-
-
-
 
 }
