@@ -16,6 +16,7 @@ import com.secure.notes.security.response.LoginResponse;
 import com.secure.notes.security.response.MessageResponse;
 import com.secure.notes.security.response.UserInfoResponse;
 import com.secure.notes.security.services.UserDetailsImpl;
+import com.secure.notes.security.services.UserDetailsServiceImpl;
 import com.secure.notes.services.JwtBlacklistService;
 import com.secure.notes.services.RateLimitingService;
 import com.secure.notes.services.TotpService;
@@ -77,6 +78,9 @@ public class AuthController {
     @Autowired
     JwtBlacklistService jwtBlacklistService;
 
+    @Autowired
+    UserDetailsServiceImpl userDetailsService;
+
     @PostMapping("/public/signin")
     public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest){
         Authentication authentication=authenticationManager
@@ -91,6 +95,10 @@ public class AuthController {
 
         UserDetailsImpl userDetails=(UserDetailsImpl) authentication.getPrincipal();
         Objects.requireNonNull(userDetails, "User details cannot be null after successful authentication");
+
+        if(userDetails.is2faEnabled()){
+            return ResponseEntity.ok(new LoginResponse(userDetails.getUsername(),null,null,true));
+        }
 
         String jwtToken=jwtUtils.generateTokenFromUsername(userDetails);
         //collect roles from userDetails
@@ -240,9 +248,9 @@ public class AuthController {
     }
 
     @PostMapping("/public/verify-2fa-login")
-    public ResponseEntity<String>verify2FALogin(@RequestParam int code,@RequestParam String jwtToken){
+    public ResponseEntity<?>verify2FALogin(@RequestParam int code,@RequestParam String username){
 
-        String username=jwtUtils.getUserNameFromJwtToken(jwtToken);
+       //String username=jwtUtils.getUserNameFromJwtToken(jwtToken);
         //check rate limit first
         if(rateLimitingService.isRateLimited(username)){
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
@@ -253,7 +261,13 @@ public class AuthController {
         if(isValid){
             //Clear rate limit on success
             rateLimitingService.clearRateLimit(username);
-            return ResponseEntity.ok("2FA verified");
+            UserDetailsImpl userDetails=(UserDetailsImpl)userDetailsService.loadUserByUsername(username);
+            String jwtToken=jwtUtils.generateTokenFromUsername(userDetails);
+            List<String>roles=userDetails.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .toList();
+            LoginResponse response=new LoginResponse(userDetails.getUsername(),roles,jwtToken);
+            return ResponseEntity.ok(response);
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body("Invalid 2FA code");

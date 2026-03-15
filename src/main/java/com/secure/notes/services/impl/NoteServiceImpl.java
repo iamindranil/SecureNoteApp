@@ -35,10 +35,8 @@ public class NoteServiceImpl implements NoteService {
     @Transactional
     @Override
     public Note updateNoteForUser(Long noteId, String content, String username){
-        Note note=noteRepository.findById(noteId).orElseThrow(()->new ResourceNotFoundException("Note not found"));
-        if(!note.getOwnerUsername().equals(username)){
-            throw new AccessDeniedException("Access denied: You do not own this note");
-        }
+        Note note=noteRepository.findByIdAndOwnerUsername(noteId,username)
+                        .orElseThrow(()->new ResourceNotFoundException("Note not found"));
         note.setContent(content);
         Note savedNote=noteRepository.save(note);
         auditLogService.logNoteUpdate(username,savedNote);
@@ -48,12 +46,10 @@ public class NoteServiceImpl implements NoteService {
     @Transactional
     @Override
     public void deleteNoteForUser(Long noteId, String username){
-        Note note=noteRepository.findById(noteId).orElseThrow(()->new ResourceNotFoundException("Note not found"));
-        if(!note.getOwnerUsername().equals(username)){
-            throw new AccessDeniedException("Access denied: You do not own this note");
-        }
+        Note note=noteRepository.findByIdAndOwnerUsername(noteId,username)
+                .orElseThrow(()->new ResourceNotFoundException("Note not found"));
         auditLogService.logNoteDeletion(username,noteId);
-        noteRepository.deleteById(noteId);
+        noteRepository.delete(note);
     }
 
     @Override
