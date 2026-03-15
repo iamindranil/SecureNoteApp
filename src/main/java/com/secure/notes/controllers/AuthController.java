@@ -238,12 +238,12 @@ public class AuthController {
     public ResponseEntity<String> verify2FA(@RequestParam int code){
         UUID userId=authUtil.loggedInUserId();
         String userName=authUtil.loggedInUser().getUserName();
-        boolean isValid=userService.validate2FACode(userId,code);
         //check rate limit
         if(rateLimitingService.isRateLimited(userName)){
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
                     .body("Too many failed attempts! Please try again later");
         }
+        boolean isValid=userService.validate2FACode(userId,code);
         if(isValid){
             userService.enable2FA(userId);
             //clear rate limit on success

@@ -29,9 +29,11 @@ public class AuthUtil {
 
     public UserDTO loggedInUser(){
         Authentication authentication= SecurityContextHolder.getContext().getAuthentication();
-        assert authentication!=null;
+        if (authentication==null||!authentication.isAuthenticated()) {
+            throw new IllegalStateException("No authenticated user found");
+        }
         User user=userRepository.findByUserName(authentication.getName())
-                .orElseThrow(()-> new RuntimeException("user not found"));
+                .orElseThrow(()-> new UsernameNotFoundException("User not found: " + authentication.getName()));
         return new UserDTO(
                 user.getUserId(),
                 user.getUserName(),
