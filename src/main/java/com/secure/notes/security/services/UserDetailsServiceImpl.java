@@ -1,6 +1,5 @@
 package com.secure.notes.security.services;
 
-import com.secure.notes.exceptions.ResourceNotFoundException;
 import com.secure.notes.models.User;
 import com.secure.notes.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +22,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Cacheable(value="userDetails",key="#username")
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUserName(username)
-                .orElseThrow(()->new ResourceNotFoundException("User Not Found with username: " + username));
+                .orElseThrow(()->new UsernameNotFoundException("Bad credentials"));
         return UserDetailsImpl.build(user);
     }
 }
