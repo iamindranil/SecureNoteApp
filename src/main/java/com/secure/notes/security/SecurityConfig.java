@@ -45,6 +45,9 @@ public class SecurityConfig {
     @Lazy
     OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
+    @Autowired
+    CustomAccessDeniedHandler customAccessDeniedHandler;
+
     @Bean
     public AuthTokenFilter authenticationJwtTokenFilter(){
         return new AuthTokenFilter();
@@ -76,7 +79,10 @@ public class SecurityConfig {
                     oauth2.successHandler(oAuth2LoginSuccessHandler);
                 })
                 .exceptionHandling(exception->
-                        exception.authenticationEntryPoint(unauthorizedHandler))
+                        exception
+                                .authenticationEntryPoint(unauthorizedHandler)
+                                .accessDeniedHandler(customAccessDeniedHandler)
+                )
                 .addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

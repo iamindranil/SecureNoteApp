@@ -22,7 +22,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Cacheable(value="userDetails",key="#username")
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUserName(username)
-                .orElseThrow(()->new UsernameNotFoundException("User Not Found with username: " + username));
+                .orElseThrow(()->new UsernameNotFoundException("Bad credentials"));
         return UserDetailsImpl.build(user);
     }
 }
